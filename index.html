@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+    <script src="./data.js"></script>
+    <style>
+    .container .box {
+
+        display: table;
+    }
+
+    .container .box .box-row {
+        display: table-row;
+    }
+
+    .container .box .box-cell {
+        display: table-cell;
+        /*width: 10%;*/
+        padding: 10px;
+    }
+
+    .container .box .box-cell.box1 {
+
+      
+        text-align: justify;
+    }
+
+    .container .box .box-cell.box2 {
+
+        text-align: justify
+    }
+
+
+    body {
+        margin: 0;
+
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+
+    button {
+        float: left;
+
+        margin-top: 10px;
+
+        text-align: center;
+        color: white;
+        background: #23b7e5;
+        font-size: 13px;
+        border-color: #23b7e5;
+        border-radius: 2px;
+        padding: 0px;
+    }
+
+    .control-label {
+        float: left;
+        border: thin red solid;
+        margin-top: 10px;
+    }
+
+    .dis {
+        float: right;
+
+    }
+
+    div.tooltip {
+        position: absolute;
+        text-align: center;
+        width: 80px;
+        height: 56px;
+        padding: 2px;
+        font: 12px sans-serif;
+        background: lightsteelblue;
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+    </style>
+</head>
+
+<body>
+    <h1> The improvement of fuel efficiency over time, impacted by regulations</h1>
+    <div style="display: inline-block;">
+        <button onclick="updateYear(-10)">Previous Decade</button> <label class="control-label"> 1990</label><button onclick="updateYear(10)">Next Decade</button>
+    </div>
+    <div class="container">
+        <div class="box">
+            <div class="box-row">
+                <div class="box-cell box1">
+
+                    <div class="btn-group">
+                       <label> Select to explore the change of MPG for various types of vehicles, default is Sedan</label>
+                        <button onclick="select('Sport Utility Vehicle')">
+                            Sport Utility Vehicle
+                        </button>
+                        <button onclick="select('Sedan')">
+                            Sedan
+                        </button>
+                        <button onclick="select('Two Seaters')">
+                            Two Seaters
+                        </button>
+                        <!--       <button onclick="select()">
+                            Clear
+                        </button> -->
+                    </div>
+                </div>
+                <div class="box-cell box2">
+                    <svg class="dis"></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    var currentYear = 1990;
+    var category = "Sedan"
+
+    function updateYear(delta) {
+        currentYear += delta
+        if (currentYear < 1990) {
+            currentYear = 1990
+        }
+
+        if (currentYear > 2020) {
+            currentYear = 2020
+        }
+        clear()
+        d3.select(".control-label").text(currentYear)
+        draw(data, category, currentYear)
+        
+    }
+    var width = 960;
+    var height = 500;
+    var margin = 50;
+    var svg = d3.select("body").select("svg")
+        .attr("width", 960 + 2 * margin)
+        .attr("height", 500 + 2 * margin).append("g").attr("transform", "translate(" + margin + ", " + margin + ")")
+
+    var div = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+    var model_year = [1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]
+    var x = d3.scaleBand().domain(model_year).range([0, width]);
+    var y = d3.scaleLinear().domain([0, 180]).range([height, 0]);
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+    svg.append("g")
+        .attr("transform", "translate(" + 0 + " , " + 0 + ")")
+        .call(d3.axisLeft(y));
+    var classes = ["Best City MPG among all models", "Worst City MPG among all models", "Average MPG among all models"]
+    var colors = ["orange", "steelblue", "black"];
+
+    svg.append("g").attr("class", "legend").selectAll().data(classes).enter().append("circle").attr("cx", function(d, i){return 200}).attr("cy", function(d, i){return 10+i*20}).attr("r", 5).attr("fill", function(d, i){return colors[i]})
+
+    svg.append("g").attr("class", "legend").selectAll().data(classes).enter().append("text").attr("x", function(d, i){return 220}).attr("y", function(d, i){return 10+i*20}).attr("r", 5).attr("fill", function(d, i){return colors[i]}).text(function(d){return d})
+     svg.append("text")             
+      .attr("transform",
+            "translate(" + (width/2) + " ," + 
+                           (height + margin) + ")")
+      .style("text-anchor", "middle")
+      .text("Model Year");
+    svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -margin)
+      .attr("x",0 - 4*margin)
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .text("Miles Per Gallon (MPG)");   
+    function getAnnotations(currentYear) {
+     
+        if (currentYear > 2010) {
+           return [{
+                    note: {
+                        // label: "Here is the detrail",
+                        title: "2009 Obama Administration directive",
+                        orientation: "leftRight",
+                        "align": "middle"
+                    },
+
+                    x: x(2009),
+                    y: margin,
+                    dy: -10,
+                    dx: -40
+                },
+                {
+                    note: {
+                        // label: "Here is the detrail https://en.wikipedia.org/wiki/Corporate_average_fuel_economy#2011_agreement_for_Model_Years_2017%E2%80%932025",
+                        title: "2011 Agreement for Model Year 2017 to 2025"
+                    },
+                    x: x(2011),
+                    y: margin,
+                    dy: -10,
+                    dx: 100
+                }
+            ]
+        }
+           if (currentYear > 2000) {
+            return [{
+                note: {
+                    // label: "Here is the detrail",
+                    title: "2009 Obama Administration directive",
+                    orientation: "leftRight",
+                    "align": "middle"
+                },
+
+                x: x(2009),
+                y: margin,
+                dy: -10,
+                dx: -40
+            }, ]
+        }
+        return []
+
+    }
+
+    function draw(data, category) {
+        // d3.selectAll("svg > *").remove();
+        data = data.filter(function(d) { return (d.VClass == category) && (d.year <= currentYear) })
+        var table = d3.nest()
+            .key(function(d) { return parseInt(d.year) }).rollup(function(v) {
+                return {
+                    avgCityMin: d3.mean(v, function(d) { return parseInt(d.cityMin) }),
+                    maxCityMin: d3.max(v, function(d) { return parseInt(d.cityMin) }),
+                    minCityMin: d3.min(v, function(d) { return parseInt(d.cityMin) }),
+                    maxCityModel: v.sort((a, b) => (parseInt(a.cityMin) < parseInt(b.cityMin)) ? 1 : -1)[0],
+                    minCityModel: v.sort((a, b) => (parseInt(a.cityMin) > parseInt(b.cityMin)) ? 1 : -1)[0],
+                    count: v.length,
+                    avgHighwayMin: d3.mean(v, function(d) { return parseInt(d.highwayMin) }),
+                    minHighwayMin: d3.min(v, function(d) { return parseInt(d.highwayMin) }),
+                    maxHighwayMin: d3.max(v, function(d) { return parseInt(d.highwayMin) }),
+                    maxHighWayModel: v.sort((a, b) => (a.highwayMin > b.highwayMin) ? 1 : -1)[0]
+                }
+            }).entries(data);
+
+        table.sort((a, b) => (a.key > b.key) ? 1 : -1)
+        //define axis
+
+        svg.append("g").attr("id", "lines")
+        // draw line avgs
+
+        svg.selectAll("#lines").append("path").datum(table).attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.key) })
+                .y(function(d) { return y(d.value.avgCityMin) })
+            )
+
+        svg.selectAll("#lines").selectAll("dot")
+            .data(table)
+            .enter().append("circle")
+            .attr("r", 5)
+            .attr("cx", function(d) { return x(d.key); })
+            .attr("cy", function(d) { return y(d.value.avgCityMin); })
+            .on("mouseover", function(d) {
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div.html(d.key + "<br/>" + d.value.avgCityMin)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+        // draw line min
+        svg.selectAll("#lines").append("path").datum(table).attr("fill", "none").attr("fill", "none")
+            .attr("stroke", "black")
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.key) })
+                .y(function(d) { return y(d.value.minCityMin) })
+            )
+        svg.selectAll("#lines").selectAll("dot")
+            .data(table)
+            .enter().append("circle")
+            .attr("r", 5)
+            .attr("cx", function(d) { return x(d.key); })
+            .attr("cy", function(d) { return y(d.value.minCityMin); })
+            .on("mouseover", function(d) {
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div.html(d.key + "<br/>" + d.value.minCityModel.make + d.value.minCityModel.model)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+        // draw max
+        svg.selectAll("#lines").append("path").datum(table).attr("fill", "none").attr("fill", "none")
+            .attr("stroke", "orange")
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.key) })
+                .y(function(d) { return y(d.value.maxCityMin) })
+            )
+        svg.selectAll("#lines").selectAll("dot")
+            .data(table)
+            .enter().append("circle")
+            .attr("r", 5)
+            .attr("cx", function(d) { return x(d.key); })
+            .attr("cy", function(d) { return y(d.value.maxCityMin); })
+            .on("mouseover", function(d) {
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div.html(d.key + "<br/>" + d.value.maxCityModel.make + d.value.maxCityModel.model + "<br/>" + d.value.maxCityMin)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+        var annotations = getAnnotations(currentYear)
+        const makeAnnotations = d3.annotation()
+            .annotations(annotations)
+
+        svg.selectAll("#lines").append("g")
+            .call(makeAnnotations);
+        if (currentYear > 2000) {
+            svg.selectAll("#lines").append("line").style("stroke", "lightgreen")
+
+                .attr("stroke-width", 1.5)
+                .attr("x1", x(2009))
+                .attr("y1", margin)
+                .attr("x2", x(2009))
+                .attr("y2", height)
+        }
+
+        if (currentYear > 2010) {
+
+            svg.selectAll("#lines").append("line").style("stroke", "lightgreen")
+                .attr("stroke-width", 1.5)
+                .attr("x1", x(2011))
+                .attr("y1", margin)
+                .attr("x2", x(2011))
+                .attr("y2", height)
+        }
+
+    }
+
+    function clear() {
+        console.log("clicked");
+        d3.selectAll("#lines").remove()
+        d3.selectAll("#lines").selectAll(".annotations").remove()
+    }
+
+    function select(cat) {
+        category = cat
+        if (category) {
+            svg.selectAll("#lines").remove()
+            draw(data, category, currentYear);
+        } else {
+            clear()
+        }
+
+    }
+    draw(data, "Sedan", currentYear)
+    // Feel free to change or delete any of the code you see in this editor!
+    </script>
+</body>
