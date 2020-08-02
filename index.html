@@ -152,7 +152,7 @@
     svg.append("g")
         .attr("transform", "translate(" + 0 + " , " + 0 + ")")
         .call(d3.axisLeft(y));
-    var classes = ["Best City MPG among all models", "Worst City MPG among all models", "Average MPG among all models"]
+    var classes = ["Best City MPG among all models",  "Median MPG among all models", "Worst City MPG among all models",]
     var colors = ["orange", "steelblue", "black"];
 
     svg.append("g").attr("class", "legend").selectAll().data(classes).enter().append("circle").attr("cx", function(d, i){return 200}).attr("cy", function(d, i){return 10+i*20}).attr("r", 5).attr("fill", function(d, i){return colors[i]})
@@ -224,13 +224,13 @@
         var table = d3.nest()
             .key(function(d) { return parseInt(d.year) }).rollup(function(v) {
                 return {
-                    avgCityMin: d3.mean(v, function(d) { return parseInt(d.cityMin) }),
+                    avgCityMin: d3.median(v, function(d) { return parseInt(d.cityMin) }),
                     maxCityMin: d3.max(v, function(d) { return parseInt(d.cityMin) }),
                     minCityMin: d3.min(v, function(d) { return parseInt(d.cityMin) }),
                     maxCityModel: v.sort((a, b) => (parseInt(a.cityMin) < parseInt(b.cityMin)) ? 1 : -1)[0],
                     minCityModel: v.sort((a, b) => (parseInt(a.cityMin) > parseInt(b.cityMin)) ? 1 : -1)[0],
                     count: v.length,
-                    avgHighwayMin: d3.mean(v, function(d) { return parseInt(d.highwayMin) }),
+                    avgHighwayMin: d3.median(v, function(d) { return parseInt(d.highwayMin) }),
                     minHighwayMin: d3.min(v, function(d) { return parseInt(d.highwayMin) }),
                     maxHighwayMin: d3.max(v, function(d) { return parseInt(d.highwayMin) }),
                     maxHighWayModel: v.sort((a, b) => (a.highwayMin > b.highwayMin) ? 1 : -1)[0]
@@ -245,7 +245,7 @@
 
         svg.selectAll("#lines").append("path").datum(table).attr("fill", "none")
             .attr("stroke", "steelblue")
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 2.5)
             .attr("d", d3.line()
                 .x(function(d) { return x(d.key) })
                 .y(function(d) { return y(d.value.avgCityMin) })
@@ -273,7 +273,7 @@
         // draw line min
         svg.selectAll("#lines").append("path").datum(table).attr("fill", "none").attr("fill", "none")
             .attr("stroke", "black")
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 2.5)
             .attr("d", d3.line()
                 .x(function(d) { return x(d.key) })
                 .y(function(d) { return y(d.value.minCityMin) })
@@ -301,7 +301,7 @@
         // draw max
         svg.selectAll("#lines").append("path").datum(table).attr("fill", "none").attr("fill", "none")
             .attr("stroke", "orange")
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 2.5)
             .attr("d", d3.line()
                 .x(function(d) { return x(d.key) })
                 .y(function(d) { return y(d.value.maxCityMin) })
